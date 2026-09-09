@@ -1097,6 +1097,41 @@ describe("extractSrjRegion", () => {
     expect(result.jumpers?.[0]?.center).toEqual({ x: 0, y: 0 })
   })
 
+  test("skips traces that omit route instead of throwing", () => {
+    const srj = createSrj({
+      connections: [
+        {
+          name: "unrouted",
+          pointsToConnect: [
+            {
+              x: 0,
+              y: 0,
+              layer: "top",
+              pointId: "pad",
+            },
+          ],
+        },
+      ],
+      traces: [
+        {
+          type: "pcb_trace",
+          pcb_trace_id: "unrouted_trace",
+          connection_name: "unrouted",
+        } as NonNullable<SimpleRouteJson["traces"]>[number],
+      ],
+    })
+
+    const result = extractSrjRegion(srj, crop)
+
+    expect(result.traces).toEqual([])
+    expect(result.connections).toEqual([
+      {
+        name: "unrouted",
+        pointsToConnect: [{ x: 0, y: 0, layer: "top", pointId: "pad" }],
+      },
+    ])
+  })
+
   test("keeps an in-crop connection point when its routed trace is entirely outside", () => {
     const srj = createSrj({
       connections: [
