@@ -467,6 +467,8 @@ const pointIsInsideObstacle = (point: Point, obstacle: RuntimeObstacle) => {
     : pointIsInsidePolygon(point, getRotatedRectCorners(obstacle))
 }
 
+const getTraceRoute = (trace: Trace): RouteToken[] => trace.route ?? []
+
 const getWireNode = (token: WireToken): PathNode => ({
   x: token.x,
   y: token.y,
@@ -514,7 +516,7 @@ const buildPathPrimitives = (trace: Trace, fallbackWidth: number) => {
   const primitives: PathPrimitive[] = []
   let cursor: PathNode | null = null
 
-  for (const token of trace.route) {
+  for (const token of getTraceRoute(trace)) {
     if (token.route_type === "wire") {
       const target = getWireNode(token)
       // A wire point's width/layer describe the segment beginning at that
@@ -591,7 +593,7 @@ const traceIsCompletelyInside = (
   trace: Trace,
   bounds: ExtractSrjRegionBounds,
 ) =>
-  trace.route.every((token) => {
+  getTraceRoute(trace).every((token) => {
     if (token.route_type === "wire" || token.route_type === "via") {
       return pointIsInsideBounds(token, bounds)
     }
@@ -658,14 +660,15 @@ const clipTrace = (
   bounds: ExtractSrjRegionBounds,
   fallbackWidth: number,
 ): TraceFragment[] => {
-  if (trace.route.length === 0) return []
+  const route = getTraceRoute(trace)
+  if (route.length === 0) return []
   if (traceIsCompletelyInside(trace, bounds)) {
-    const firstToken = trace.route[0]
-    const lastToken = trace.route.at(-1)
+    const firstToken = route[0]
+    const lastToken = route.at(-1)
     if (!firstToken || !lastToken) return []
     return [
       {
-        route: clone(trace.route),
+        route: clone(route),
         start: getTokenStartNode(firstToken, fallbackWidth),
         end: getTokenEndNode(lastToken, fallbackWidth),
         startWasCut: false,
