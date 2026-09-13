@@ -1139,7 +1139,7 @@ export const extractSrjRegion = (
   )
   const boundaryObstacles: Obstacle[] = []
   const artificialCutEndpoints: Array<{
-    point: Point
+    point: PathNode
     provenanceAliases: Set<string>
   }> = []
   const outputTraces: Trace[] = []
@@ -1182,6 +1182,7 @@ export const extractSrjRegion = (
       if (!pointIsInsideBounds(candidate, bounds)) return false
       return boundaryTerminalReservations.every((reservation) => {
         if (reservation.canonicalName === canonicalName) return true
+        if (reservation.node.layer !== candidate.layer) return true
         if (
           getRoundedCoordinateLayerHash(candidate) ===
           getRoundedCoordinateLayerHash(reservation.node)
@@ -1406,6 +1407,7 @@ export const extractSrjRegion = (
       if (obstacleAliases.size === 0) return true
       return !artificialCutEndpoints.some(
         (endpoint) =>
+          obstacle.layers.includes(endpoint.point.layer) &&
           pointIsInsideObstacle(endpoint.point, obstacle as RuntimeObstacle) &&
           !Array.from(endpoint.provenanceAliases).some((alias) =>
             obstacleAliases.has(alias),
